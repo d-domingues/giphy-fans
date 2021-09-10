@@ -18,14 +18,14 @@ export class ApiService {
       .pipe(pluck('data'));
   }
 
-  getGifs(page: number): Observable<GIFObject[]> {
+  getGifs(offset: number, limit: number): Observable<GIFObject[]> {
     return this.http
       .get('https://api.giphy.com/v1/gifs/trending', {
         params: {
           api_key: 'hwDpo6kxm4XyMvxuOiYEhWcfIbA9U4Jc',
           rating: 'pg-13',
-          limit: 4 + '',
-          offset: 4 * page + '',
+          limit: limit + '',
+          offset: offset + '',
         },
       })
       .pipe(pluck('data'));

@@ -1,7 +1,7 @@
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { Component, ViewChild } from '@angular/core';
 import { GIFObject } from 'giphy-api';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { mergeMap, scan } from 'rxjs/operators';
 
 import { AuthService } from '../services/auth.service';
@@ -14,7 +14,11 @@ import { ApiService } from './../services/api.service';
     <button class="log-btn" (click)="auth.logOut()">
       {{ this.auth.user ? 'Log Out' : 'Log In' }}
     </button>
-    <cdk-virtual-scroll-viewport appendOnly itemSize="350">
+    <cdk-virtual-scroll-viewport
+      appendOnly
+      itemSize="350"
+      (scrolledIndexChange)="onScroll()"
+    >
       <div
         *cdkVirtualFor="let gif of data$ | async; trackBy: trackBy"
         class="item"
@@ -39,18 +43,29 @@ import { ApiService } from './../services/api.service';
   `,
 })
 export class HomeComponent {
+  readonly limit = 10;
+  // TODO: update list
+  readonly likes: string[] = this.api.getLikes();
+
+  offset$ = new BehaviorSubject(0);
   data$: Observable<GIFObject[]>;
-  likes: string[] = this.api.getLikes();
 
   @ViewChild(CdkVirtualScrollViewport) viewport: CdkVirtualScrollViewport;
 
-  constructor(public api: ApiService, public auth: AuthService) {}
-
-  ngAfterViewInit() {
-    this.data$ = this.viewport.scrolledIndexChange.pipe(
-      mergeMap((page) => this.api.getGifs(page)),
+  constructor(public api: ApiService, public auth: AuthService) {
+    this.data$ = this.offset$.pipe(
+      mergeMap((offset) => this.api.getGifs(offset, this.limit)),
       scan((acc, data: GIFObject[]) => acc.concat(data), [])
     );
+  }
+
+  onScroll() {
+    const renderedRangeEnd = this.viewport.getRenderedRange().end;
+    const dataLength = this.viewport.getDataLength();
+
+    if (renderedRangeEnd === dataLength) {
+      this.offset$.next(this.offset$.value + this.limit);
+    }
   }
 
   trackBy(gif: GIFObject) {
