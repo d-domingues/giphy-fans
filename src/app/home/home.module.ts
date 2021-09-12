@@ -4,10 +4,11 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { LikeBtnModule } from './../like-btn/like-btn.module';
+import { GifRowComponent } from './gif-row.component';
 import { HomeComponent } from './home.component';
 
 @NgModule({
-  declarations: [HomeComponent],
+  declarations: [HomeComponent, GifRowComponent],
   imports: [
     CommonModule,
     RouterModule.forChild([
@@ -21,6 +22,6 @@ import { HomeComponent } from './home.component';
     LikeBtnModule,
     ScrollingModule,
   ],
-  exports: [HomeComponent],
+  exports: [HomeComponent, GifRowComponent],
 })
 export class HomeModule {}

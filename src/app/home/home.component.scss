@@ -5,20 +5,23 @@
 }
 
 .item {
-  height: 350px;
+  height: 300px;
   margin: auto;
-  width: fit-content;
-
-  .gif {
-    display: block;
-    height: 90%;
-  }
-
-  .btn {
-    height: 10%;
-  }
+  display: block;
+  // width: fit-content;
 }
 
-.log-btn {
+.gif {
+  display: block;
+  height: 90%;
+}
+
+.btn {
+  height: 10%;
+}
+
+.buttons {
   position: absolute;
+  right: 0;
+  z-index: 999;
 }

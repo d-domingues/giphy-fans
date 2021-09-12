@@ -11,51 +11,45 @@ import { ApiService } from './../services/api.service';
   selector: 'app-home',
   styleUrls: ['./home.component.scss'],
   template: `
-    <button class="log-btn" (click)="auth.logOut()">
-      {{ this.auth.user ? 'Log Out' : 'Log In' }}
-    </button>
+    <div class="buttons">
+      <button (click)="auth.logOut()">
+        {{ this.auth.user ? 'Log Out' : 'Log In' }}
+      </button>
+      <button (click)="onToggleFilter()">
+        {{ likedOnly$.value ? 'All Gifs' : 'Liked Gifs' }}
+      </button>
+    </div>
+
     <cdk-virtual-scroll-viewport
-      appendOnly
-      itemSize="350"
+      itemSize="300"
       (scrolledIndexChange)="onScroll()"
     >
-      <div
+      <app-gif-row
         *cdkVirtualFor="let gif of data$ | async; trackBy: trackBy"
         class="item"
-      >
-        <img class="gif" [src]="gif.images.original.url" />
-
-        <app-like-btn
-          *ngIf="!!auth.user"
-          class="btn"
-          [liked]="likes.includes(gif.id)"
-          (onLike)="api.likeGif(gif)"
-          (onUnlike)="api.unlikeGif(gif)"
-        ></app-like-btn>
-
-        <img
-          class="btn"
-          src="assets/view-details.svg"
-          [routerLink]="['details', gif.id]"
-        />
-      </div>
+        [gif]="gif"
+        [liked]="likes.includes(gif.id)"
+      ></app-gif-row>
     </cdk-virtual-scroll-viewport>
   `,
 })
 export class HomeComponent {
   readonly limit = 10;
-  // TODO: update list
-  readonly likes: string[] = this.api.getLikes();
+
+  get likes(): string[] {
+    return this.api.getLikes();
+  }
 
   offset$ = new BehaviorSubject(0);
+  likedOnly$ = new BehaviorSubject(false);
   data$: Observable<GIFObject[]>;
 
   @ViewChild(CdkVirtualScrollViewport) viewport: CdkVirtualScrollViewport;
 
   constructor(public api: ApiService, public auth: AuthService) {
-    this.data$ = this.offset$.pipe(
-      mergeMap((offset) => this.api.getGifs(offset, this.limit)),
-      scan((acc, data: GIFObject[]) => acc.concat(data), [])
+    // unecessary to unsubscribe given that emits on user interaction only
+    this.likedOnly$.subscribe((likedOnly) =>
+      likedOnly ? this.getLikedGifs() : this.getAllGifs()
     );
   }
 
@@ -63,12 +57,27 @@ export class HomeComponent {
     const renderedRangeEnd = this.viewport.getRenderedRange().end;
     const dataLength = this.viewport.getDataLength();
 
-    if (renderedRangeEnd === dataLength) {
+    if (!!dataLength && renderedRangeEnd === dataLength) {
       this.offset$.next(this.offset$.value + this.limit);
     }
   }
 
   trackBy(gif: GIFObject) {
     return gif.id;
+  }
+
+  onToggleFilter() {
+    this.likedOnly$.next(!this.likedOnly$.value);
+  }
+
+  getAllGifs() {
+    this.data$ = this.offset$.pipe(
+      mergeMap((offset) => this.api.getGifs(offset, this.limit)),
+      scan((acc, data: GIFObject[]) => acc.concat(data), [])
+    );
+  }
+
+  getLikedGifs() {
+    this.data$ = this.api.getGifsByIds(this.likes);
   }
 }

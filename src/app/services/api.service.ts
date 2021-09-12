@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { GIFObject } from 'giphy-api';
 import { Observable } from 'rxjs';
@@ -28,6 +28,19 @@ export class ApiService {
           offset: offset + '',
         },
       })
+      .pipe(pluck('data'));
+  }
+
+  getGifsByIds(ids: string[]): Observable<GIFObject[]> {
+    const params = new HttpParams({
+      fromObject: {
+        api_key: 'hwDpo6kxm4XyMvxuOiYEhWcfIbA9U4Jc',
+        ids: ids.join(),
+      },
+    });
+
+    return this.http
+      .get('https://api.giphy.com/v1/gifs', { params })
       .pipe(pluck('data'));
   }
 
