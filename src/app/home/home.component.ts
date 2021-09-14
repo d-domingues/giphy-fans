@@ -1,8 +1,8 @@
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
 import { Component, ViewChild } from '@angular/core';
 import { GIFObject } from 'giphy-api';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { mergeMap, scan } from 'rxjs/operators';
+import { BehaviorSubject, iif, Observable } from 'rxjs';
+import { mergeMap, scan, switchMap } from 'rxjs/operators';
 
 import { AuthService } from '../services/auth.service';
 import { ApiService } from './../services/api.service';
@@ -47,9 +47,10 @@ export class HomeComponent {
   @ViewChild(CdkVirtualScrollViewport) viewport: CdkVirtualScrollViewport;
 
   constructor(public api: ApiService, public auth: AuthService) {
-    // unecessary to unsubscribe given that emits on user interaction only
-    this.likedOnly$.subscribe((likedOnly) =>
-      likedOnly ? this.getLikedGifs() : this.getAllGifs()
+    this.data$ = this.likedOnly$.pipe(
+      switchMap((likedOnly) =>
+        iif(() => likedOnly, this.getLikedGifs(), this.getAllGifs())
+      )
     );
   }
 
@@ -71,13 +72,13 @@ export class HomeComponent {
   }
 
   getAllGifs() {
-    this.data$ = this.offset$.pipe(
+    return this.offset$.pipe(
       mergeMap((offset) => this.api.getGifs(offset, this.limit)),
       scan((acc, data: GIFObject[]) => acc.concat(data), [])
     );
   }
 
   getLikedGifs() {
-    this.data$ = this.api.getGifsByIds(this.likes);
+    return this.api.getGifsByIds(this.likes);
   }
 }
