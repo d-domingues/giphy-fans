@@ -9,10 +9,29 @@ import { AuthService } from './../services/auth.service';
 
 @Component({
   selector: 'app-details',
-  template: `
-    <button routerLink="/home">Return</button>
+  styles: [
+    `
+      .constainer {
+        margin: 20px;
+        box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px,
+          rgba(0, 0, 0, 0.24) 0px 1px 2px;
+        border-radius: 10px;
+        justify-content: center;
+      }
 
-    <div *ngIf="gif$ | async as gif">
+      .gif {
+        width: max(20vw, 200px);
+      }
+    `,
+  ],
+  template: `
+    <div class="constainer" *ngIf="gif$ | async as gif">
+      <button routerLink="/home">Return</button>
+
+      <img class="gif" [src]="gif.images.original.url" />
+
+      <h1>{{ gif.title }}</h1>
+
       <app-like-btn
         *ngIf="!!auth.user"
         class="btn"
